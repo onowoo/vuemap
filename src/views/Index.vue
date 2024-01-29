@@ -1,0 +1,4 @@
+<template>
+    <Header />
+    <Map />
+</template>
