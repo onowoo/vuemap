@@ -6,13 +6,14 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import Vue3BaiduMapGL from 'vue3-baidu-map-gl'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import { DrawScene, MarkerDraw } from 'bmap-draw';
 import 'virtual:windi.css'
 const app = createApp(App)
 app.use(ElementPlus)
 app.use(router)
 app.use(Vue3BaiduMapGL, {
     ak: '7iELRkWE3yRZ78tBcR5XGHvLL0XSuIu3',
-    plugins: ['TrackAnimation']
+    plugins: ['TrackAnimation','Mapvgl', 'Mapv', 'MapvThree']
   })
   app.mount('#app')
   for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

@@ -1,9 +1,12 @@
 <script setup>
-import { BMap, BInfoWindow, BMarker } from "vue3-baidu-map-gl";
-import { ref } from 'vue'
-import { ArrowDown } from '@element-plus/icons-vue'
-import {  } from 'vue3-baidu-map-gl'
-
+import { BMap, BInfoWindow, BMarker,BNavigation3d,useDefaultMarkerIcons } from "vue3-baidu-map-gl";
+import { ref, watch } from 'vue'
+import { ArrowDown ,  CircleCloseFilled ,Sunny ,Moon } from '@element-plus/icons-vue'
+import { useRouter } from "vue-router"
+import { useDark } from '@vueuse/core'
+import { DrawScene, MarkerDraw } from 'bmap-draw';
+const isDark = useDark()
+const router = useRouter()
 const mapSetting = ref({
     enableDragging: true,
     enableInertialDragging: true,
@@ -16,7 +19,17 @@ const mapSetting = ref({
     enableTraffic: false
   })
 const show = ref(false)
+const visible = ref(false)
 const mapStyle = ref("BMAP_NORMAL_MAP")
+const changeMap = (s) => {
+  if (s === 1) {
+    mapStyle.value = "BMAP_NORMAL_MAP"
+  } else if (s === 2) {
+    mapStyle.value = "BMAP_EARTH_MAP"
+  } else {
+    mapStyle.value = "BMAP_SATELLITE_MAP"
+  }
+} 
 const mapCenter = ref({
         lng: 126.57618999481201,
         lat: 43.860602088678505,
@@ -58,16 +71,201 @@ const options = [
     ],
   },
 ]
+
+// 鼠标交互
+  let distance = ref({
+    instance: null,
+    isMeasuring: true,
+    toggle() {
+      let _distance = distance.value
+      _distance.isMeasuring ? _distance.instance.close() : _distance.instance.open()
+      _distance.isMeasuring = !_distance.isMeasuring
+    }
+  })
+  let measure = ref({
+    instance: null,
+    isMeasuring: true,
+    toggle() {
+      let _measure = measure.value
+      _measure.isMeasuring ? _measure.instance.close() : _measure.instance.open()
+      _measure.isMeasuring = !_measure.isMeasuring
+    }
+  })
+  let marker = ref({
+    instance: null,
+    isDrawing: false,
+    toggle() {
+      let _marker = marker.value
+      _marker.isDrawing ? _marker.instance.closeAll() : _marker.instance.open()
+      _marker.isDrawing = !_marker.isDrawing
+    }
+  })
+  let circle = ref({
+    instance: null,
+    isDrawing: false,
+    toggle() {
+      let _circle = circle.value
+      _circle.isDrawing ? _circle.instance.closeAll() : _circle.instance.open()
+      _circle.isDrawing = !_circle.isDrawing
+    }
+  })
+  let polyline = ref({
+    instance: null,
+    isDrawing: false,
+    toggle() {
+      let _polyline = polyline.value
+      _polyline.isDrawing ? _polyline.instance.closeAll() : _polyline.instance.open()
+      _polyline.isDrawing = !_polyline.isDrawing
+    }
+  })
+  let polygon = ref({
+    instance: null,
+    isDrawing: false,
+    toggle() {
+      let _polygon = polygon.value
+      _polygon.isDrawing ? _polygon.instance.closeAll() : _polygon.instance.open()
+      _polygon.isDrawing = !_polygon.isDrawing
+    }
+  })
+  let rectangle = ref({
+    instance: null,
+    isDrawing: false,
+    toggle() {
+      let _rectangle = rectangle.value
+      _rectangle.isDrawing ? _rectangle.instance.closeAll() : _rectangle.instance.open()
+      _rectangle.isDrawing = !_rectangle.isDrawing
+    }
+  })
+  let clearFn = ref()
+  function handleInitd({ map, BMapGL }) {
+    import('bmap-draw').then(({ DrawScene, MarkerDraw, PolylineDraw, CircleDraw, PolygonDraw, RectDraw,DistanceMeasure,AreaMeasure }) => {
+      const scene = new DrawScene(map)
+      clearFn.value = () => scene.clearData()
+      distance.value.instance = new DistanceMeasure(scene)
+      distance.value.toggle()
+      distance.value.instance.addEventListener('measure-length-end', (e) => {
+        console.log('measure-end', e)
+      })
+      // 测量面积
+      measure.value.instance = new AreaMeasure(scene)
+      measure.value.toggle()
+      measure.value.instance.addEventListener('measure-area-end', (e) => {
+        console.log('measure-end', e)
+      })
+      
+      // 点绘制
+      const defaultIcons = useDefaultMarkerIcons()
+      marker.value.instance = new MarkerDraw(scene, {
+        isOpen: false,
+        isSeries: true,
+        enableDragging: true,
+        baseOpts: {
+          icon: defaultIcons['red1']
+        }
+      })
+      // 折线绘制
+      polyline.value.instance = new PolylineDraw(scene, {
+        isOpen: false,
+        enableSnap: true, // 开启吸附绘制
+        matchOverlay: {
+          // 自定义吸附点样式
+          type: 'Marker',
+          icon: new BMapGL.Icon(
+            'http://maponline0.bdimg.com/sty/map_icons2x/MapRes/shenghui_1.png',
+            new BMapGL.Size(10, 10),
+            { offset: new BMapGL.Size(5, 5) }
+          )
+        }
+      })
+      // 多边形绘制
+      polygon.value.instance = new PolygonDraw(scene, {
+        isOpen: false,
+        labelOptions: {
+          borderRadius: '2px',
+          background: '#b5d3fb',
+          border: '1px solid #b5d3fb',
+          color: '#333',
+          fontSize: '12px',
+          letterSpacing: '0',
+          padding: '5px'
+        },
+        baseOpts: {
+          fillColor: '#fff',
+          strokeWeight: 5,
+          strokeOpacity: 1,
+          fillOpacity: 0.2
+        }
+      })
+      // 圆形绘制
+      circle.value.instance = new CircleDraw(scene, {
+        isOpen: false,
+        labelOptions: {
+          borderRadius: '2px',
+          background: '#b5d3fb',
+          border: '1px solid #b5d3fb',
+          color: '#333',
+          fontSize: '12px',
+          letterSpacing: '0',
+          padding: '5px'
+        },
+        baseOpts: {
+          strokeColor: '#6d77f9',
+          fillColor: '#fff',
+          strokeWeight: 5,
+          strokeOpacity: 1,
+          fillOpacity: 0.2
+        }
+      })
+      // 矩形绘制
+      rectangle.value.instance = new RectDraw(scene, {
+        isOpen: false,
+        isSeries: true,
+        labelOptions: {
+          borderRadius: '2px',
+          background: '#b5d3fb',
+          border: '1px solid #b5d3fb',
+          color: '#333',
+          fontSize: '12px',
+          letterSpacing: '0',
+          padding: '5px'
+        },
+        baseOpts: {
+          fillColor: '#fff',
+          strokeWeight: 5,
+          strokeOpacity: 1,
+          fillOpacity: 0.2
+        }
+      })
+    })
+  }
 </script>
 
 <template>
-      <div class="z-50 w-[100%] flex justify-center items-center gap-3 py-6">
-          <el-button type="primary" size="small" @click="mapStyle='BMAP_NORMAL_MAP'">常规模式</el-button>
-          <el-button type="success" size="small" @click="mapStyle='BMAP_EARTH_MAP'">地球模式</el-button>
-          <el-button type="info" size="small" @click="mapStyle='BMAP_SATELLITE_MAP'">卫星模式</el-button>
+    <div class="h-20 bg-white dark:bg-gray-700 shadow flex justify-between px-10 items-center">
+        <div class="text-2xl font-bold font-serif dark:text-white">资产地图</div>
+        <div class="flex items-center gap-3">
+          <el-button type="success" size="small" @click="changeMap(1)">常规模式</el-button>
+          <el-button type="success" size="small" @click="changeMap(2)">地球模式</el-button>
+          <el-button type="success" size="small" @click="changeMap(3)">卫星模式</el-button>
+
+        <el-button type="warning" size="small" v-if="!marker.isDrawing" @click="marker.toggle">绘制点</el-button>
+    <el-button type="warning" size="small" v-else @click="marker.toggle">禁用绘制点</el-button>
+    <el-button type="warning" size="small" v-if="!polyline.isDrawing" @click="polyline.toggle">绘制线</el-button>
+    <el-button type="warning" size="small" v-else @click="polyline.toggle">禁用绘制线</el-button>
+    <el-button type="warning" size="small" v-if="!circle.isDrawing" @click="circle.toggle">绘制圆</el-button>
+    <el-button type="warning" size="small" v-else @click="circle.toggle">禁用绘制圆</el-button>
+    <el-button type="warning" size="small" v-if="!polygon.isDrawing" @click="polygon.toggle">绘制多边形</el-button>
+    <el-button type="warning" size="small" v-else @click="polygon.toggle">禁用绘制多边形</el-button>
+    <el-button type="warning" size="small" v-if="!rectangle.isDrawing" @click="rectangle.toggle">绘制矩形</el-button>
+    <el-button type="warning" size="small" v-else @click="rectangle.toggle">禁用绘制矩形</el-button>
+    <el-button type="warning" size="small" v-if="!distance.isMeasuring" @click="distance.toggle">测量距离</el-button>
+    <el-button type="warning" size="small" v-else @click="distance.toggle">取消测量距离</el-button>
+    <el-button type="warning" size="small" v-if="!measure.isMeasuring" @click="measure.toggle">测量面积</el-button>
+    <el-button type="warning" size="small" v-else @click="measure.toggle">取消测量面积</el-button>
+    <el-button type="warning" size="small" @click="clearFn">清空</el-button>
           <el-dropdown class="ml-3">
                 <el-button type="primary" size="small">
-                    Dropdown List<el-icon class="el-icon--right"><arrow-down /></el-icon>
+                    地图控件<el-icon class="el-icon--right"><arrow-down /></el-icon>
                 </el-button>
                 <template #dropdown>
                     <el-dropdown-menu class="flex flex-col ml-6">
@@ -79,7 +277,6 @@ const options = [
                       <el-checkbox v-model="mapSetting.enableContinuousZoom" label="平滑缩放" size="large" />
                       <el-checkbox v-model="mapSetting.enableTraffic" label="交通路况" size="large" />
                       <el-checkbox v-model="show" label="简介显示" size="large" />
-                      <el-switch v-model="show" active-text="简介显示" inactive-text="简介关闭" style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" inline-prompt/>
                     </el-dropdown-menu>
                 </template>
             </el-dropdown>
@@ -97,16 +294,20 @@ const options = [
                 />
               </el-option-group>
             </el-select>
-      </div>
+            <el-switch v-model="isDark" :active-icon="Sunny" :inactive-icon="Moon" style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" inline-prompt/>
+        </div>
+    </div>
+    
     <BMap
       class="map overflow-hidden border-dark-50"
-      :zoom="9"
+      :zoom="5"
       :minZoom="3"
-      height="80vh"
+      height="93vh"
       :mapType="mapStyle"
       :center="mapCenter"
+      @initd="handleInitd"
       enableScrollWheelZoom
-      mapStyleId="0f3219e982947931ae2893345940df80"
+      mapStyleId="980161f3645989feac25a0da15da4178"
       :enableDragging="mapSetting.enableDragging"
       :enableInertialDragging="mapSetting.enableInertialDragging"
       :enableContinuousZoom="mapSetting.enableContinuousZoom"
@@ -117,33 +318,64 @@ const options = [
     >
       <BMarker
         :position="{ lat: 43.860602088678505, lng: 126.57618999481201 }"
-        icon="red1"
+        icon="simple_red"
+        @click="visible = true"
       />
-      <BInfoWindow
-        v-model:show="show"
-        :position="{ lat: 43.860602088678505, lng: 126.57618999481201 }"
-        title="图文组合排版"
-      >
-        <h2>天安门</h2>
-        <div class="infoWindow-content">
-          <p>
-            天安门坐落在中国北京市中心，故宫的南侧，与天安门广场隔长安街相望，是清朝皇城的大门。..
-          </p>
-          <img
-            width="139"
-            height="104"
-            src="https://lbs.baidu.com/jsdemo/img/tianAnMen.jpg"
-            alt=""
-          />
+          <BLabel
+          content="content"
+          v-if="show"
+          :offset = {x:20,y:-18}
+          :position="{ lat: 43.860602088678505, lng: 126.57618999481201 }"
+          :style="{
+            color: '#fff',
+            backgroundColor: 'rgb(0,0,0,0.3)',
+            border: 'none',
+            borderRadius: '3px',
+            padding: '5px 10px',
+            fontSize: '16px'
+          }"
+        />
+        <div class="icon scale-50">
+            <BMarker
+        :position="{ lat: 43.260602088678505, lng: 126.27618999481201 }"
+        icon="simple_red"
+        @click="visible = true"
+      />
+          <BLabel
+          content="content"
+          v-if="show"
+          :offset = {x:20,y:-18}
+          :position="{ lat: 43.860602088678505, lng: 126.57618999481201 }"
+          :style="{
+            color: '#fff',
+            backgroundColor: 'rgb(0,0,0,0.3)',
+            border: 'none',
+            borderRadius: '3px',
+            padding: '5px 10px',
+            fontSize: '16px'
+          }"
+        />
         </div>
-      </BInfoWindow>
       <!-- <BPanoramaControl /> -->
       <!-- <BPanoramaCoverageLayer /> -->
     </BMap>
+      <el-drawer v-model="visible" :show-close="false" size="45%" class="dark:bg-gray-700 dark:text-white">
+        <template #header="{ close, titleId, titleClass }">
+          <h4 :id="titleId" :class="titleClass" class="dark:text-white">这是介绍</h4>
+          <el-button type="danger" @click="close">
+            <el-icon class="el-icon--left"><CircleCloseFilled /></el-icon>
+            关闭
+          </el-button>
+        </template>
+        这是正文
+      </el-drawer>
 </template>
 
 <style scoped>
 .read-the-docs {
   color: #888;
+}
+.BMap_Marker {
+  width: 50px!important;
 }
 </style>

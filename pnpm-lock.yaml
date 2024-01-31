@@ -11,6 +11,9 @@ dependencies:
   '@vueuse/core':
     specifier: ^10.7.2
     version: 10.7.2(vue@3.3.11)
+  bmap-draw:
+    specifier: ^1.0.26
+    version: 1.0.26
   element-plus:
     specifier: ^2.5.3
     version: 2.5.3(vue@3.3.11)
@@ -668,6 +671,10 @@ packages:
     resolution: {integrity: sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==}
     engines: {node: '>=8'}
     dev: true
+
+  /bmap-draw@1.0.26:
+    resolution: {integrity: sha512-DnWEEzliKrtnCIs6x4bkn2FcQL4VW2DaD5Bd3iMGOybxJJ2wo8Z9ZLrLhJdBMHN7QoTxQUYxZ4K2OzAa2DMAzA==}
+    dev: false
 
   /brace-expansion@2.0.1:
     resolution: {integrity: sha512-XnAIvQ8eM+kC6aULx6wuQiwVsnzsi9d3WxzV3FpWTGA19F621kwdbsAcFKXgKUHZWsy+mY6iL1sHTxWEFCytDA==}
