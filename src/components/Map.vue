@@ -1,10 +1,12 @@
 <script setup>
 import { BMap, BInfoWindow, BMarker,BNavigation3d,useDefaultMarkerIcons } from "vue3-baidu-map-gl";
-import { ref, watch } from 'vue'
+import { ref, watch,onMounted,computed} from 'vue'
+import { storeToRefs } from "pinia";
 import { ArrowDown ,  CircleCloseFilled ,Sunny ,Moon } from '@element-plus/icons-vue'
 import { useRouter } from "vue-router"
 import { useDark } from '@vueuse/core'
 import { DrawScene, MarkerDraw } from 'bmap-draw';
+import { PageArchives,UserService } from "/src/api/api.js";
 const isDark = useDark()
 const router = useRouter()
 const mapSetting = ref({
@@ -18,7 +20,7 @@ const mapSetting = ref({
     enableAutoResize: true,
     enableTraffic: false
   })
-const show = ref(false)
+const show = ref(true)
 const visible = ref(false)
 const mapStyle = ref("BMAP_NORMAL_MAP")
 const changeMap = (s) => {
@@ -30,47 +32,10 @@ const changeMap = (s) => {
     mapStyle.value = "BMAP_SATELLITE_MAP"
   }
 } 
-const mapCenter = ref({
-        lng: 126.57618999481201,
-        lat: 43.860602088678505,
-      })
+
 const value = ref('')
-const options = [
-  {
-    label: '公司一',
-    options: [
-      {
-        value: 'Shanghai',
-        label: 'Shanghai',
-      },
-      {
-        value: 'Beijing',
-        label: 'Beijing',
-      },
-    ],
-  },
-  {
-    label: '公司二',
-    options: [
-      {
-        value: 'Chengdu',
-        label: 'Chengdu',
-      },
-      {
-        value: 'Shenzhen',
-        label: 'Shenzhen',
-      },
-      {
-        value: 'Guangzhou',
-        label: 'Guangzhou',
-      },
-      {
-        value: 'Dalian',
-        label: 'Dalian',
-      },
-    ],
-  },
-]
+
+const zoom = ref(5)
 
 // 鼠标交互
   let distance = ref({
@@ -238,6 +203,56 @@ const options = [
       })
     })
   }
+
+// api
+onMounted(() => {
+  postData()
+});
+const list = ref([])
+// const configData = async () => {
+//   const data = {
+//     // channel_id: -1,
+//   };
+//   const res = await UserService.getConfig(data);
+//   // console.log(res.data);
+// }
+const postData = async () => {
+  const data = {
+    model: 1,
+  };
+  const res = await PageArchives.getArchives(data);
+  list.value = res.data.data.pageList.data
+  console.log(list.value);
+};
+
+const detail = ref({})
+const mapCenter = ref(null)
+const detailData = async (id) => {
+  const data = {
+    id: id,
+  };
+  const res = await PageArchives.getArchivesDetail(data);
+  mapCenter.value = {
+        lng: Number(res.data.data.archivesInfo.lng),
+        lat: Number(res.data.data.archivesInfo.lat),
+      }
+  console.log(mapCenter.value);
+  detail.value = res.data.data.archivesInfo
+  // console.log(res.data);
+  visible.value = true
+  zoom.value = 19
+};
+
+const filteredList = computed(() => {
+  const uniqueChannelIds = new Set();
+  return list.value.filter((group) => {
+    if (!uniqueChannelIds.has(group.channel_id)) {
+      uniqueChannelIds.add(group.channel_id);
+      return true;
+    }
+    return false;
+  });
+});
 </script>
 
 <template>
@@ -276,35 +291,37 @@ const options = [
                       <el-checkbox v-model="mapSetting.enableDoubleClickZoom" label="双击缩放" size="large" />
                       <el-checkbox v-model="mapSetting.enableContinuousZoom" label="平滑缩放" size="large" />
                       <el-checkbox v-model="mapSetting.enableTraffic" label="交通路况" size="large" />
-                      <el-checkbox v-model="show" label="简介显示" size="large" />
+                      <el-checkbox v-model="show" label="简介资产名" size="large" />
                     </el-dropdown-menu>
                 </template>
             </el-dropdown>
             <el-select class="ml-3" v-model="value" placeholder="快速导航" style="width: 140px" size="small">
               <el-option-group
-                v-for="group in options"
-                :key="group.label"
-                :label="group.label"
+                v-for="group in filteredList"
+                :key="group.channel_id"
+                :label="group.channel.name + `(`+ group.channel.items +`)`"
               >
                 <el-option
-                  v-for="item in group.options"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
+                  v-for="item in list"
+                  v-show="item.channel_id == group.channel_id"
+                  :key="item.id"
+                  :label="item.nickname"
+                  :value="item.nickname"
+                  @click="detailData(item.id)"
                 />
               </el-option-group>
             </el-select>
             <el-switch v-model="isDark" :active-icon="Sunny" :inactive-icon="Moon" style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" inline-prompt/>
         </div>
     </div>
-    
+
     <BMap
       class="map overflow-hidden border-dark-50"
-      :zoom="5"
+      :zoom="zoom"
       :minZoom="3"
       height="93vh"
       :mapType="mapStyle"
-      :center="mapCenter"
+      :center="mapCenter || {lat:43.879038 ,lng :126.575784}"
       @initd="handleInitd"
       enableScrollWheelZoom
       mapStyleId="980161f3645989feac25a0da15da4178"
@@ -316,58 +333,55 @@ const options = [
       :enablePinchToZoom="mapSetting.enablePinchToZoom"
       :enableTraffic="mapSetting.enableTraffic"
     >
+    <div v-for="(icons,index) in list" :key="index">
       <BMarker
-        :position="{ lat: 43.860602088678505, lng: 126.57618999481201 }"
+        :position="{ lat: icons.lat, lng: icons.lng}"
         icon="simple_red"
-        @click="visible = true"
+        @click="detailData(icons.id)"
       />
-          <BLabel
-          content="content"
-          v-if="show"
-          :offset = {x:20,y:-18}
-          :position="{ lat: 43.860602088678505, lng: 126.57618999481201 }"
-          :style="{
-            color: '#fff',
-            backgroundColor: 'rgb(0,0,0,0.3)',
-            border: 'none',
-            borderRadius: '3px',
-            padding: '5px 10px',
-            fontSize: '16px'
-          }"
-        />
-        <div class="icon scale-50">
-            <BMarker
-        :position="{ lat: 43.260602088678505, lng: 126.27618999481201 }"
-        icon="simple_red"
-        @click="visible = true"
-      />
-          <BLabel
-          content="content"
-          v-if="show"
-          :offset = {x:20,y:-18}
-          :position="{ lat: 43.860602088678505, lng: 126.57618999481201 }"
-          :style="{
-            color: '#fff',
-            backgroundColor: 'rgb(0,0,0,0.3)',
-            border: 'none',
-            borderRadius: '3px',
-            padding: '5px 10px',
-            fontSize: '16px'
-          }"
-        />
-        </div>
-      <!-- <BPanoramaControl /> -->
-      <!-- <BPanoramaCoverageLayer /> -->
+      <BLabel
+      :content="icons.nickname"
+      v-if="show"
+      :offset = {x:20,y:-18}
+      :position="{ lat: icons.lat, lng: icons.lng }"
+      :style="{
+        color: '#fff',
+        backgroundColor: 'rgb(0,0,0,0.3)',
+        border: 'none',
+        borderRadius: '3px',
+        padding: '5px 10px',
+        fontSize: '16px'
+      }"
+    />
+    </div>
     </BMap>
-      <el-drawer v-model="visible" :show-close="false" size="45%" class="dark:bg-gray-700 dark:text-white">
-        <template #header="{ close, titleId, titleClass }">
-          <h4 :id="titleId" :class="titleClass" class="dark:text-white">这是介绍</h4>
-          <el-button type="danger" @click="close">
-            <el-icon class="el-icon--left"><CircleCloseFilled /></el-icon>
-            关闭
-          </el-button>
+      <el-drawer v-model="visible" :show-close="false" size="30%" class="dark:bg-gray-700 dark:text-white">
+        <template #header="{titleId, titleClass }">
+          <h4 :id="titleId" :class="titleClass" class="dark:text-white text-xl font-bold">{{ detail.title }}</h4>
         </template>
-        这是正文
+        <div class="flex flex-col gap-4">
+          <div>
+            <el-descriptions
+              direction="vertical"
+              :column="4"
+              size="small"
+              border
+            >
+              <el-descriptions-item label="资产名称" :span="2">{{detail.nickname}}</el-descriptions-item>
+              <el-descriptions-item label="占地面积" :span="1">48000平方米</el-descriptions-item>
+              <el-descriptions-item label="建筑面积" :span="1">58000平方米</el-descriptions-item>
+              <el-descriptions-item label="管理单位" :span="2">{{ detail.channel.name }}</el-descriptions-item>
+              <el-descriptions-item label="负责人">
+                蔡徐看
+              </el-descriptions-item>
+              <el-descriptions-item label="产权证明" :span="1">关于产权证的简要说明</el-descriptions-item>
+              <el-descriptions-item label="资产现状" :span="2">kooriookami</el-descriptions-item>
+              <el-descriptions-item label="责任人">18100000000</el-descriptions-item>
+              <el-descriptions-item label="应急电话">18100000000</el-descriptions-item>
+            </el-descriptions>
+          </div>
+          <div v-html="detail.content"></div>
+        </div>
       </el-drawer>
 </template>
 

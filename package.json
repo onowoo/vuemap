@@ -11,8 +11,11 @@
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
     "@vueuse/core": "^10.7.2",
+    "axios": "^1.6.7",
     "bmap-draw": "^1.0.26",
+    "dayjs": "^1.11.10",
     "element-plus": "^2.5.3",
+    "pinia": "^2.1.7",
     "vue": "^3.3.11",
     "vue-router": "4",
     "vue3-baidu-map-gl": "^2.3.2"
