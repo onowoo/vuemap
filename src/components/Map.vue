@@ -249,9 +249,9 @@ const detailData = async (id) => {
   setTimeout (() => {
     console.log(mapCenter.value);
     detail.value = res.data.data.archivesInfo
-    // console.log(res.data);
+    console.log(res.data);
     visible.value = true
-    zoom.value = 19
+    zoom.value = 17
   },500);
 };
 
@@ -346,16 +346,14 @@ const filteredList = computed(() => {
       <div>
         <el-descriptions direction="vertical" :column="4" size="small" border>
           <el-descriptions-item label="资产名称" :span="2">{{ detail.nickname }}</el-descriptions-item>
-          <el-descriptions-item label="占地面积" :span="1">48000平方米</el-descriptions-item>
-          <el-descriptions-item label="建筑面积" :span="1">58000平方米</el-descriptions-item>
+          <el-descriptions-item label="占地面积" :span="1">{{ detail.cover_area }}</el-descriptions-item>
+          <el-descriptions-item label="建筑面积" :span="1">{{ detail.floor_area }}</el-descriptions-item>
           <el-descriptions-item label="管理单位" :span="2">{{ detail.channel.name }}</el-descriptions-item>
-          <el-descriptions-item label="负责人">
-            蔡徐看
-          </el-descriptions-item>
-          <el-descriptions-item label="产权证明" :span="1">关于产权证的简要说明</el-descriptions-item>
-          <el-descriptions-item label="资产现状" :span="2">kooriookami</el-descriptions-item>
-          <el-descriptions-item label="责任人">18100000000</el-descriptions-item>
-          <el-descriptions-item label="应急电话">18100000000</el-descriptions-item>
+          <el-descriptions-item label="负责人">{{ detail.manager }}</el-descriptions-item>
+          <el-descriptions-item label="产权证明" :span="1">{{ detail.identification }}</el-descriptions-item>
+          <el-descriptions-item label="资产现状" :span="2">{{ detail.status_quo }}</el-descriptions-item>
+          <el-descriptions-item label="责任人">{{ detail.just_manager }}</el-descriptions-item>
+          <el-descriptions-item label="应急电话">{{ detail.tel }}</el-descriptions-item>
         </el-descriptions>
       </div>
       <div v-html="detail.content"></div>
@@ -367,7 +365,6 @@ const filteredList = computed(() => {
 .read-the-docs {
   color: #888;
 }
-
 .BMap_Marker {
   width: 50px !important;
 }
