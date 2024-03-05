@@ -271,7 +271,7 @@ const detailData = async (id) => {
 </script>
 
 <template>
-  <div class="h-20 bg-white dark:bg-gray-700 shadow flex justify-between px-10 items-center">
+  <div class="h-20 absolute left-0 right-0 z-50 bg-[rgb(255,255,255,0.5)] dark:bg-[rgb(0,0,0,0.5)] border shadow backdrop-filter backdrop-blur-4 flex justify-between px-10 items-center">
     <div class="text-2xl font-bold font-serif dark:text-white">资产分布图<span class="text-[8px] font-auto">v1.0.0</span></div>
     <div class="flex items-center gap-3">
 
@@ -352,7 +352,7 @@ const detailData = async (id) => {
     </div>
   </div>
 
-  <BMap class="map overflow-hidden border-dark-50" :zoom="zoom" :minZoom="3" height="93vh" :mapType="mapStyle"
+  <BMap class="map overflow-hidden border-dark-50" :zoom="zoom" :minZoom="3" height="100vh" :mapType="mapStyle"
     :center="mapCenter || { lat: 43.879038, lng: 126.575784 }" @initd="handleInitd" enableScrollWheelZoom
     mapStyleId="980161f3645989feac25a0da15da4178" :enableDragging="mapSetting.enableDragging"
     :enableInertialDragging="mapSetting.enableInertialDragging" :enableContinuousZoom="mapSetting.enableContinuousZoom"

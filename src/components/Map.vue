@@ -279,7 +279,7 @@ const filteredList = computed(() => {
 </script>
 
 <template>
-  <div class="h-20 bg-white dark:bg-gray-700 shadow flex justify-between px-10 items-center">
+  <div class="h-20 absolute left-0 right-0 z-50 bg-[rgb(255,255,255,0.5)] dark:bg-[rgb(0,0,0,0.5)] border shadow backdrop-filter backdrop-blur-4 flex justify-between px-10 items-center">
     <div class="text-2xl font-bold font-serif dark:text-white">资产分布图<span class="text-[8px] font-auto">v1.0.0</span></div>
     <div class="flex items-center gap-3">
 
@@ -362,14 +362,18 @@ const filteredList = computed(() => {
     </div>
   </div>
 
-  <BMap class="map overflow-hidden border-dark-50" :zoom="zoom" :minZoom="3" height="93vh" :mapType="mapStyle"
+  <div v-if="detail.nickname" class="absolute z-50 bottom-0 left-0 right-[80%]">
+    <Table :detail="detail"></Table>
+  </div>
+
+  <BMap class="map overflow-hidden border-dark-50" :zoom="zoom" :minZoom="3" height="100vh" :mapType="mapStyle"
     :center="mapCenter || { lat: 43.879038, lng: 126.575784 }" @initd="handleInitd" enableScrollWheelZoom
     mapStyleId="980161f3645989feac25a0da15da4178" :enableDragging="mapSetting.enableDragging"
     :enableInertialDragging="mapSetting.enableInertialDragging" :enableContinuousZoom="mapSetting.enableContinuousZoom"
     :enableDoubleClickZoom="mapSetting.enableDoubleClickZoom" :enableKeyboard="mapSetting.enableKeyboard"
     :enablePinchToZoom="mapSetting.enablePinchToZoom" :enableTraffic="mapSetting.enableTraffic">
     <div v-for="(icons, index) in list" :key="index">
-      <BMarker :position="{ lat: icons.lat, lng: icons.lng }" imageUrl="/icon.png" :imageSize="{'width':4,'height':4}" @click="detailData(icons.id)" class="w-2 h-2"/>
+      <BMarker :position="{ lat: icons.lat, lng: icons.lng }" icon="simple_red" @click="detailData(icons.id)"/>
       <BLabel :content="icons.nickname" v-if="show" :offset="{ x: 20, y: -14 }"
         :position="{ lat: icons.lat, lng: icons.lng }" :style="{
           color: '#fff',
@@ -381,27 +385,6 @@ const filteredList = computed(() => {
         }" />
     </div>
   </BMap>
-  <el-drawer v-model="visible" :show-close="false" size="30%" class="dark:bg-gray-700 dark:text-white">
-    <template #header="{ titleId, titleClass }">
-      <h4 :id="titleId" :class="titleClass" class="dark:text-white text-xl font-bold">{{ detail.title }}</h4>
-    </template>
-    <div class="flex flex-col gap-4">
-      <div>
-        <el-descriptions direction="vertical" :column="4" size="small" border>
-          <el-descriptions-item label="资产名称" :span="2">{{ detail.nickname }}</el-descriptions-item>
-          <el-descriptions-item label="占地面积" :span="1">{{ detail.cover_area }}</el-descriptions-item>
-          <el-descriptions-item label="建筑面积" :span="1">{{ detail.floor_area }}</el-descriptions-item>
-          <el-descriptions-item label="管理单位" :span="2">{{ detail.channel.name }}</el-descriptions-item>
-          <el-descriptions-item label="负责人">{{ detail.manager }}</el-descriptions-item>
-          <el-descriptions-item label="产权证明" :span="1">{{ detail.identification }}</el-descriptions-item>
-          <el-descriptions-item label="资产现状" :span="2">{{ detail.status_quo }}</el-descriptions-item>
-          <el-descriptions-item label="责任人">{{ detail.just_manager }}</el-descriptions-item>
-          <el-descriptions-item label="应急电话">{{ detail.tel }}</el-descriptions-item>
-        </el-descriptions>
-      </div>
-      <div v-html="detail.content"></div>
-    </div>
-  </el-drawer>
 </template>
 
 <style scoped>
