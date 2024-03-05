@@ -51,6 +51,12 @@ export class PageArchives {     // 栏目文章单页
     static async getArchives(params) {   //列表页
         return request('/addons/cms/api.archives/index',params, 'get')
     } 
+    static async getMyArchives(params) {   //列表页
+        return request('/addons/cms/api.archives/my',params, 'get')
+    } 
+    static async getZiArchives(params) {   //列表页
+        return request('/addons/cms/api.cmsaddonwuyezichan/index',params, 'get')
+    } 
     static async getArchivesDetail(params) { //详情页
         return request('/addons/cms/api.archives/detail',params, 'post')
     }

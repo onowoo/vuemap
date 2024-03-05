@@ -17,8 +17,8 @@ axios.interceptors.request.use(
     config.headers = {
       //'Content-Type':'application/x-www-form-urlencoded',   // 传参方式表单
       'Content-Type':'application/json',        // 传参方式json
-    //   'token':sessionStorage.get('token') ?? storage.get('token'),           // 这里自定义配置，这里传的是token
-    //   'uid':sessionStorage.get('userId') ?? storage.get('userId'),
+      'token':sessionStorage.get('token') ?? storage.get('token'),           // 这里自定义配置，这里传的是token
+      'uid':sessionStorage.get('userId') ?? storage.get('userId'),
     };
     return config;
   },
@@ -41,7 +41,7 @@ axios.interceptors.response.use(
         message: showMessage(response.status),
         type: 'error',
       })        // 传入响应码，匹配响应码对应信息
-      // router.push("/login")
+      router.push("/login")
       return Promise.reject(response.data);
     } else {
       ElMessage.warning('网络连接异常,请稍后再试!');

@@ -8,9 +8,11 @@ import { useDark } from '@vueuse/core'
 import { DrawScene, MarkerDraw } from 'bmap-draw';
 import { PageArchives, UserService } from "/src/api/api.js";
 import { storage, sessionStorage } from "../utils/storage";
+import { useArchiveStore } from '../store/index'
 const isDark = useDark()
 const router = useRouter()
-
+const archiveStore = useArchiveStore()
+const archivesList = archiveStore.archivesList
 const loginout = () => {
   storage.remove("token");
   storage.remove("userId");
@@ -19,7 +21,6 @@ const loginout = () => {
   sessionStorage.remove("userId");
   router.push("/login");
 }
-
 const mapSetting = ref({
   enableDragging: true,
   enableInertialDragging: true,
@@ -223,7 +224,7 @@ function handleInitd({ map, BMapGL }) {
 
 // api
 onMounted(() => {
-  postData()
+  myData()
 });
 const list = ref([])
 // const configData = async () => {
@@ -237,45 +238,36 @@ const mapCenter = ref({
   lng: 106,
   lat: 33
 })
-const postData = async () => {
-  const data = {
-    model: 1,
-  };
-  const res = await PageArchives.getArchives(data);
-  list.value = res.data.data.pageList.data
-  // console.log(list.value);
-};
 
+const myData = async () => {
+  const data = {
+    model_id : 1
+  }
+  const res = await PageArchives.getMyArchives(data)
+  // console.log(res.data);
+  list.value = res.data.data.archivesList.data
+  archiveStore.setArchivesList(res.data.data.archivesList.data)
+}
 const detail = ref({})
 
 const detailData = async (id) => {
-  const data = {
-    id: id,
-  };
-  const res = await PageArchives.getArchivesDetail(data);
-  mapCenter.value = {
-      lng: Number(res.data.data.archivesInfo.lng),
-      lat: Number(res.data.data.archivesInfo.lat),
-  }
-  setTimeout (() => {
-    // console.log(mapCenter.value);
-    detail.value = res.data.data.archivesInfo
-    // console.log(res.data);
+  const archive = archiveStore.archivesList.find(archive => archive.id === id)
+  if (archive) {
+    // 这里处理找到的文章详情逻辑
+    // console.log(archive)
+    detail.value = archive
+    console.log(detail.value);
+    mapCenter.value = {
+      lng: Number(detail.value.lng),
+      lat: Number(detail.value.lat),
+    }
     visible.value = true
     zoom.value = 17
-  },500);
-};
-
-const filteredList = computed(() => {
-  const uniqueChannelIds = new Set();
-  return list.value.filter((group) => {
-    if (!uniqueChannelIds.has(group.channel_id)) {
-      uniqueChannelIds.add(group.channel_id);
-      return true;
+    } else {
+      console.error('未找到对应的文章详情')
     }
-    return false;
-  });
-});
+  }
+
 </script>
 
 <template>
@@ -348,17 +340,15 @@ const filteredList = computed(() => {
           </el-dropdown-menu>
         </template>
       </el-dropdown>
-
       <el-select class="ml-3" v-model="value" placeholder="快速导航" style="width: 140px" size="small">
-        <el-option-group v-for="group in filteredList" :key="group.channel_id"
-          :label="group.channel.name + `(` + group.channel.items + `)`">
-          <el-option v-for="item in list" v-show="item.channel_id == group.channel_id" :key="item.id"
+        <el-option-group>
+          <el-option v-for="item in list" :key="item.id"
             :label="item.nickname" :value="item.nickname" @click="detailData(item.id)" />
         </el-option-group>
       </el-select>
       <el-switch v-model="isDark" :active-icon="Sunny" :inactive-icon="Moon"
         style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" inline-prompt />
-      <el-button type="danger" size="small" :icon="SwitchButton" circle @click="loginout"></el-button>
+        <el-button type="danger" size="small" :icon="SwitchButton" circle @click="loginout"></el-button>
     </div>
   </div>
 
@@ -369,7 +359,7 @@ const filteredList = computed(() => {
     :enableDoubleClickZoom="mapSetting.enableDoubleClickZoom" :enableKeyboard="mapSetting.enableKeyboard"
     :enablePinchToZoom="mapSetting.enablePinchToZoom" :enableTraffic="mapSetting.enableTraffic">
     <div v-for="(icons, index) in list" :key="index">
-      <BMarker :position="{ lat: icons.lat, lng: icons.lng }" imageUrl="/icon.png" :imageSize="{'width':4,'height':4}" @click="detailData(icons.id)" class="w-2 h-2"/>
+      <BMarker :position="{ lat: icons.lat, lng: icons.lng }" icon="simple_red" @click="detailData(icons.id)" />
       <BLabel :content="icons.nickname" v-if="show" :offset="{ x: 20, y: -14 }"
         :position="{ lat: icons.lat, lng: icons.lng }" :style="{
           color: '#fff',
@@ -379,7 +369,7 @@ const filteredList = computed(() => {
           padding: '3px 6px',
           fontSize: '14px'
         }" />
-    </div>
+        </div>
   </BMap>
   <el-drawer v-model="visible" :show-close="false" size="30%" class="dark:bg-gray-700 dark:text-white">
     <template #header="{ titleId, titleClass }">
