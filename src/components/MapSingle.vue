@@ -272,7 +272,7 @@ const detailData = async (id) => {
 
 <template>
   <div class="h-20 absolute left-0 right-0 z-50 bg-[rgb(255,255,255,0.5)] dark:bg-[rgb(0,0,0,0.5)] border shadow backdrop-filter backdrop-blur-4 flex justify-between px-10 items-center">
-    <div class="text-2xl font-bold font-serif dark:text-white">资产分布图<span class="text-[8px] font-auto">v1.0.0</span></div>
+    <div class="text-2xl font-bold font-serif dark:text-white">资产分布图<span class="text-[8px] font-auto">v1.0.8</span></div>
     <div class="flex items-center gap-3">
 
       <el-dropdown>
